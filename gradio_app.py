@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from theme_classifier import ThemeClassifier 
 import pandas as pd 
-from charactere_network import Charactere_network_generator,NameEntityRecognizer 
+from charactere_network import Charactere_network_generator 
+from charactere_network import NameEntityRecognizer
 
 def get_themes(theme_list, subtitle_path, save_path):
     list_themes = theme_list.split(',')
@@ -31,9 +32,9 @@ def get_themes(theme_list, subtitle_path, save_path):
 
 #-------------------------------------------------------------------
 def get_chars(subtitles_path,save_path):
-    ner=new NameEntityRecognizer ()
+    ner= NameEntityRecognizer()
     df=ner.get_ners(save_path)
-    chs=new Charactere_network_generator()
+    chs= Charactere_network_generator()
     df=chs.(df)
     return chs.draw_graph(df)
     
