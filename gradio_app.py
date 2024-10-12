@@ -32,7 +32,7 @@ def get_themes(theme_list, subtitle_path, save_path):
 
 #-------------------------------------------------------------------
 def get_chars(subtitles_path,save_path):
-    ner= NameEntityRecognizer()
+    ner= NameEntityRecognizer(subtitles_path)
     df=ner.get_ners(save_path)
     chs= Charactere_network_generator()
     df=chs(df)
