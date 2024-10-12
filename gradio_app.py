@@ -35,7 +35,7 @@ def get_chars(subtitles_path,save_path):
     ner= NameEntityRecognizer()
     df=ner.get_ners(save_path)
     chs= Charactere_network_generator()
-    df=chs.(df)
+    df=chs(df)
     return chs.draw_graph(df)
     
 
