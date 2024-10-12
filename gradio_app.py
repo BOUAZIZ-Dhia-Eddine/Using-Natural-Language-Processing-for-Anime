@@ -42,7 +42,6 @@ def get_chars(subtitles_path,save_path):
     
 
 def main():
-    print('hello world')
     
     with gr.Blocks() as iface:
         with gr.Row():
@@ -63,7 +62,7 @@ def main():
                 gr.HTML("Name Entity Recognition (NER)")
                 with gr.Row():
                     with gr.Column():
-                         graph=gr.Image('characters Score')
+                         graph=gr.HTML()
                     with gr.Column():
                         subtitles_path=gr.Text('Subtitle Path')
                         save_path=gr.Text('Save Path')
