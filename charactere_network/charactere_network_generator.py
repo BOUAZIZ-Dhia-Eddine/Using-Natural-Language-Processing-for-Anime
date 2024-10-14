@@ -1,7 +1,11 @@
 from pyvis.network import Network 
 import networkx as nx
 import pandas as pd
-
+import pathlib
+import sys
+import os
+folder_path = pathlib.Path().parent.resolve()
+sys.path.append(os.path.join(folder_path, "../"))
 class Charactere_network_generator:  
     def __init__(self):
         pass
@@ -51,7 +55,7 @@ class Charactere_network_generator:
         )
         node_degree = dict(l.degree)
         nx.set_node_attributes(l, node_degree, "size")
-        net = Network(notebook=True, width="1000px", height="700px", font_color="white", cdn_resources="remote")  # Corrigé ici
+        net = Network(notebook=True, width="1000px", height="700px", font_color="Black", cdn_resources="remote")  # Corrigé ici
         net.from_nx(l)
         html = net.generate_html()
         html = html.replace("\n", " ")
@@ -61,4 +65,9 @@ class Charactere_network_generator:
             allow-scripts allow-same-origin allow-popups 
             allow-top-navigation-by-user-activation allow-downloads" allowfullscreen="" 
             allowpaymentrequest="" frameborder="0" srcdoc="{html}"></iframe>"""
-        return output_html
+            
+            
+        return '<iframe style="width: 100%; height: 600px; margin:0 auto" name="result" allow="midi; geolocation; microphone; camera; display-capture; encrypted-media;" sandbox="allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation allow-downloads" allowfullscreen="" allowpaymentrequest="" frameborder="0" src="http://127.0.0.1:5500/graph.html"></iframe>'
+        # return output_html
+    
+

@@ -45,7 +45,7 @@ class ThemeClassifier:
             script_batch.append(batch_sentences)
             
       
-        outputs = self.model_classifier(script_batch, self.list_theme, multi_label=True)
+        outputs = self.model_classifier(script_batch[:2], self.list_theme, multi_label=True)
         
        
         for output in outputs:
@@ -67,7 +67,7 @@ class ThemeClassifier:
             return df_p
 
         df_p = load_substiles_dataset(path_dataset)
-
+        df_p=df_p.head(2)
         outputs_theme=df_p['script'].apply(self.get_theme_inference)
         outputs_theme=pd.DataFrame(outputs_theme.to_list())
         df_p = pd.concat([df_p, outputs_theme], axis=1)

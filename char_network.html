@@ -1,0 +1,349 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 1000px;
+                 height: 700px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "font": {"color": "Black"}, "id": "NARUTO", "label": "NARUTO", "shape": "dot", "size": 42}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "SASUKE", "label": "SASUKE", "shape": "dot", "size": 37}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "HOKAGE", "label": "HOKAGE", "shape": "dot", "size": 24}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "IRUKA", "label": "IRUKA", "shape": "dot", "size": 14}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "SAKURA", "label": "SAKURA", "shape": "dot", "size": 21}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "MIZUKI", "label": "MIZUKI", "shape": "dot", "size": 7}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "KAKASHI", "label": "KAKASHI", "shape": "dot", "size": 22}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "ZABUZA", "label": "ZABUZA", "shape": "dot", "size": 18}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "THE", "label": "THE", "shape": "dot", "size": 12}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "TAZUNA", "label": "TAZUNA", "shape": "dot", "size": 15}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "JONIN", "label": "JONIN", "shape": "dot", "size": 11}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "NINJA", "label": "NINJA", "shape": "dot", "size": 9}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "DEMON", "label": "DEMON", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "LRUKA", "label": "LRUKA", "shape": "dot", "size": 3}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "INARI", "label": "INARI", "shape": "dot", "size": 6}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "NINE-TAILED", "label": "NINE-TAILED", "shape": "dot", "size": 3}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "CHATORA", "label": "CHATORA", "shape": "dot", "size": 6}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "GENIN", "label": "GENIN", "shape": "dot", "size": 7}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "HAKU", "label": "HAKU", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "KONOHAMARU", "label": "KONOHAMARU", "shape": "dot", "size": 5}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "GATO", "label": "GATO", "shape": "dot", "size": 6}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "GRANDPA", "label": "GRANDPA", "shape": "dot", "size": 3}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "SENSEI", "label": "SENSEI", "shape": "dot", "size": 6}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "TORI", "label": "TORI", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "CHUNIN", "label": "CHUNIN", "shape": "dot", "size": 7}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "SHIKAMARU", "label": "SHIKAMARU", "shape": "dot", "size": 8}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "EBISU", "label": "EBISU", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "UZUMAKI", "label": "UZUMAKI", "shape": "dot", "size": 2}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "GRANDSON", "label": "GRANDSON", "shape": "dot", "size": 2}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "THAT", "label": "THAT", "shape": "dot", "size": 2}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "NARUTOS", "label": "NARUTOS", "shape": "dot", "size": 2}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "INO", "label": "INO", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "CHOJI", "label": "CHOJI", "shape": "dot", "size": 3}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "FATTY", "label": "FATTY", "shape": "dot", "size": 3}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "ROGUE", "label": "ROGUE", "shape": "dot", "size": 9}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "HINATA", "label": "HINATA", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "KIBA", "label": "KIBA", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "MANJI", "label": "MANJI", "shape": "dot", "size": 2}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "TORA", "label": "TORA", "shape": "dot", "size": 5}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "JUTSU", "label": "JUTSU", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "K-KAKASHI", "label": "K-KAKASHI", "shape": "dot", "size": 5}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "KAGE", "label": "KAGE", "shape": "dot", "size": 5}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "SHARINGAN", "label": "SHARINGAN", "shape": "dot", "size": 8}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "SHINOBI", "label": "SHINOBI", "shape": "dot", "size": 1}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "TIGER", "label": "TIGER", "shape": "dot", "size": 2}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "USHI", "label": "USHI", "shape": "dot", "size": 8}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "NE", "label": "NE", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "JIN", "label": "JIN", "shape": "dot", "size": 4}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "SHIJIMI", "label": "SHIJIMI", "shape": "dot", "size": 1}, {"color": "#97c2fc", "font": {"color": "Black"}, "id": "SHURIKEN", "label": "SHURIKEN", "shape": "dot", "size": 2}]);
+                  edges = new vis.DataSet([{"Occurrences": 300, "from": "NARUTO", "to": "SASUKE", "width": 1}, {"Occurrences": 139, "from": "NARUTO", "to": "HOKAGE", "width": 1}, {"Occurrences": 114, "from": "NARUTO", "to": "IRUKA", "width": 1}, {"Occurrences": 95, "from": "NARUTO", "to": "SAKURA", "width": 1}, {"Occurrences": 91, "from": "NARUTO", "to": "MIZUKI", "width": 1}, {"Occurrences": 87, "from": "NARUTO", "to": "KAKASHI", "width": 1}, {"Occurrences": 34, "from": "NARUTO", "to": "ZABUZA", "width": 1}, {"Occurrences": 25, "from": "NARUTO", "to": "THE", "width": 1}, {"Occurrences": 24, "from": "NARUTO", "to": "TAZUNA", "width": 1}, {"Occurrences": 19, "from": "NARUTO", "to": "JONIN", "width": 1}, {"Occurrences": 18, "from": "NARUTO", "to": "NINJA", "width": 1}, {"Occurrences": 13, "from": "NARUTO", "to": "DEMON", "width": 1}, {"Occurrences": 12, "from": "NARUTO", "to": "LRUKA", "width": 1}, {"Occurrences": 12, "from": "NARUTO", "to": "INARI", "width": 1}, {"Occurrences": 10, "from": "NARUTO", "to": "NINE-TAILED", "width": 1}, {"Occurrences": 10, "from": "NARUTO", "to": "CHATORA", "width": 1}, {"Occurrences": 9, "from": "NARUTO", "to": "GENIN", "width": 1}, {"Occurrences": 9, "from": "NARUTO", "to": "HAKU", "width": 1}, {"Occurrences": 9, "from": "NARUTO", "to": "KONOHAMARU", "width": 1}, {"Occurrences": 9, "from": "NARUTO", "to": "GATO", "width": 1}, {"Occurrences": 8, "from": "NARUTO", "to": "GRANDPA", "width": 1}, {"Occurrences": 8, "from": "NARUTO", "to": "SENSEI", "width": 1}, {"Occurrences": 8, "from": "NARUTO", "to": "TORI", "width": 1}, {"Occurrences": 8, "from": "NARUTO", "to": "CHUNIN", "width": 1}, {"Occurrences": 8, "from": "NARUTO", "to": "SHIKAMARU", "width": 1}, {"Occurrences": 8, "from": "NARUTO", "to": "EBISU", "width": 1}, {"Occurrences": 7, "from": "NARUTO", "to": "UZUMAKI", "width": 1}, {"Occurrences": 7, "from": "NARUTO", "to": "GRANDSON", "width": 1}, {"Occurrences": 7, "from": "NARUTO", "to": "THAT", "width": 1}, {"Occurrences": 6, "from": "NARUTO", "to": "NARUTOS", "width": 1}, {"Occurrences": 6, "from": "NARUTO", "to": "INO", "width": 1}, {"Occurrences": 5, "from": "NARUTO", "to": "CHOJI", "width": 1}, {"Occurrences": 5, "from": "NARUTO", "to": "FATTY", "width": 1}, {"Occurrences": 4, "from": "NARUTO", "to": "ROGUE", "width": 1}, {"Occurrences": 4, "from": "NARUTO", "to": "HINATA", "width": 1}, {"Occurrences": 4, "from": "NARUTO", "to": "KIBA", "width": 1}, {"Occurrences": 3, "from": "NARUTO", "to": "MANJI", "width": 1}, {"Occurrences": 3, "from": "NARUTO", "to": "TORA", "width": 1}, {"Occurrences": 3, "from": "NARUTO", "to": "JUTSU", "width": 1}, {"Occurrences": 2, "from": "NARUTO", "to": "K-KAKASHI", "width": 1}, {"Occurrences": 2, "from": "NARUTO", "to": "KAGE", "width": 1}, {"Occurrences": 2, "from": "NARUTO", "to": "SHARINGAN", "width": 1}, {"Occurrences": 157, "from": "SASUKE", "to": "SAKURA", "width": 1}, {"Occurrences": 57, "from": "SASUKE", "to": "KAKASHI", "width": 1}, {"Occurrences": 32, "from": "SASUKE", "to": "NINJA", "width": 1}, {"Occurrences": 29, "from": "SASUKE", "to": "IRUKA", "width": 1}, {"Occurrences": 28, "from": "SASUKE", "to": "HOKAGE", "width": 1}, {"Occurrences": 23, "from": "SASUKE", "to": "ZABUZA", "width": 1}, {"Occurrences": 17, "from": "SASUKE", "to": "SENSEI", "width": 1}, {"Occurrences": 15, "from": "SASUKE", "to": "JONIN", "width": 1}, {"Occurrences": 15, "from": "SASUKE", "to": "TAZUNA", "width": 1}, {"Occurrences": 13, "from": "SASUKE", "to": "INO", "width": 1}, {"Occurrences": 10, "from": "SASUKE", "to": "SHIKAMARU", "width": 1}, {"Occurrences": 9, "from": "SASUKE", "to": "GENIN", "width": 1}, {"Occurrences": 9, "from": "SASUKE", "to": "TORI", "width": 1}, {"Occurrences": 9, "from": "SASUKE", "to": "SHINOBI", "width": 1}, {"Occurrences": 8, "from": "SASUKE", "to": "TIGER", "width": 1}, {"Occurrences": 8, "from": "SASUKE", "to": "USHI", "width": 1}, {"Occurrences": 7, "from": "SASUKE", "to": "HAKU", "width": 1}, {"Occurrences": 6, "from": "SASUKE", "to": "SHARINGAN", "width": 1}, {"Occurrences": 6, "from": "SASUKE", "to": "INARI", "width": 1}, {"Occurrences": 5, "from": "SASUKE", "to": "UZUMAKI", "width": 1}, {"Occurrences": 5, "from": "SASUKE", "to": "GATO", "width": 1}, {"Occurrences": 5, "from": "SASUKE", "to": "CHUNIN", "width": 1}, {"Occurrences": 5, "from": "SASUKE", "to": "KIBA", "width": 1}, {"Occurrences": 4, "from": "SASUKE", "to": "MANJI", "width": 1}, {"Occurrences": 4, "from": "SASUKE", "to": "THE", "width": 1}, {"Occurrences": 4, "from": "SASUKE", "to": "MIZUKI", "width": 1}, {"Occurrences": 4, "from": "SASUKE", "to": "FATTY", "width": 1}, {"Occurrences": 4, "from": "SASUKE", "to": "HINATA", "width": 1}, {"Occurrences": 4, "from": "SASUKE", "to": "NE", "width": 1}, {"Occurrences": 4, "from": "SASUKE", "to": "CHOJI", "width": 1}, {"Occurrences": 3, "from": "SASUKE", "to": "K-KAKASHI", "width": 1}, {"Occurrences": 3, "from": "SASUKE", "to": "KONOHAMARU", "width": 1}, {"Occurrences": 3, "from": "SASUKE", "to": "JIN", "width": 1}, {"Occurrences": 2, "from": "SASUKE", "to": "KAGE", "width": 1}, {"Occurrences": 2, "from": "SASUKE", "to": "EBISU", "width": 1}, {"Occurrences": 2, "from": "SASUKE", "to": "ROGUE", "width": 1}, {"Occurrences": 21, "from": "SAKURA", "to": "KAKASHI", "width": 1}, {"Occurrences": 10, "from": "SAKURA", "to": "IRUKA", "width": 1}, {"Occurrences": 9, "from": "SAKURA", "to": "INO", "width": 1}, {"Occurrences": 9, "from": "SAKURA", "to": "SENSEI", "width": 1}, {"Occurrences": 8, "from": "SAKURA", "to": "HOKAGE", "width": 1}, {"Occurrences": 5, "from": "SAKURA", "to": "TORI", "width": 1}, {"Occurrences": 5, "from": "SAKURA", "to": "TIGER", "width": 1}, {"Occurrences": 4, "from": "SAKURA", "to": "NINJA", "width": 1}, {"Occurrences": 4, "from": "SAKURA", "to": "KONOHAMARU", "width": 1}, {"Occurrences": 4, "from": "SAKURA", "to": "SHIKAMARU", "width": 1}, {"Occurrences": 3, "from": "SAKURA", "to": "ZABUZA", "width": 1}, {"Occurrences": 3, "from": "SAKURA", "to": "GENIN", "width": 1}, {"Occurrences": 3, "from": "SAKURA", "to": "INARI", "width": 1}, {"Occurrences": 2, "from": "SAKURA", "to": "KIBA", "width": 1}, {"Occurrences": 2, "from": "SAKURA", "to": "HINATA", "width": 1}, {"Occurrences": 2, "from": "SAKURA", "to": "MIZUKI", "width": 1}, {"Occurrences": 2, "from": "SAKURA", "to": "JONIN", "width": 1}, {"Occurrences": 2, "from": "SAKURA", "to": "USHI", "width": 1}, {"Occurrences": 2, "from": "SAKURA", "to": "CHOJI", "width": 1}, {"Occurrences": 22, "from": "HOKAGE", "to": "KAKASHI", "width": 1}, {"Occurrences": 16, "from": "HOKAGE", "to": "IRUKA", "width": 1}, {"Occurrences": 16, "from": "HOKAGE", "to": "MIZUKI", "width": 1}, {"Occurrences": 14, "from": "HOKAGE", "to": "CHATORA", "width": 1}, {"Occurrences": 14, "from": "HOKAGE", "to": "KONOHAMARU", "width": 1}, {"Occurrences": 11, "from": "HOKAGE", "to": "TAZUNA", "width": 1}, {"Occurrences": 8, "from": "HOKAGE", "to": "EBISU", "width": 1}, {"Occurrences": 7, "from": "HOKAGE", "to": "THAT", "width": 1}, {"Occurrences": 7, "from": "HOKAGE", "to": "GRANDPA", "width": 1}, {"Occurrences": 6, "from": "HOKAGE", "to": "GRANDSON", "width": 1}, {"Occurrences": 6, "from": "HOKAGE", "to": "THE", "width": 1}, {"Occurrences": 5, "from": "HOKAGE", "to": "JONIN", "width": 1}, {"Occurrences": 4, "from": "HOKAGE", "to": "TORA", "width": 1}, {"Occurrences": 4, "from": "HOKAGE", "to": "K-KAKASHI", "width": 1}, {"Occurrences": 4, "from": "HOKAGE", "to": "KAGE", "width": 1}, {"Occurrences": 4, "from": "HOKAGE", "to": "CHUNIN", "width": 1}, {"Occurrences": 3, "from": "HOKAGE", "to": "NINJA", "width": 1}, {"Occurrences": 3, "from": "HOKAGE", "to": "GENIN", "width": 1}, {"Occurrences": 3, "from": "HOKAGE", "to": "ZABUZA", "width": 1}, {"Occurrences": 2, "from": "HOKAGE", "to": "DEMON", "width": 1}, {"Occurrences": 2, "from": "HOKAGE", "to": "LRUKA", "width": 1}, {"Occurrences": 28, "from": "IRUKA", "to": "MIZUKI", "width": 1}, {"Occurrences": 12, "from": "IRUKA", "to": "KAKASHI", "width": 1}, {"Occurrences": 7, "from": "IRUKA", "to": "THE", "width": 1}, {"Occurrences": 5, "from": "IRUKA", "to": "DEMON", "width": 1}, {"Occurrences": 4, "from": "IRUKA", "to": "JONIN", "width": 1}, {"Occurrences": 4, "from": "IRUKA", "to": "NINE-TAILED", "width": 1}, {"Occurrences": 4, "from": "IRUKA", "to": "SENSEI", "width": 1}, {"Occurrences": 4, "from": "IRUKA", "to": "LRUKA", "width": 1}, {"Occurrences": 2, "from": "IRUKA", "to": "NINJA", "width": 1}, {"Occurrences": 2, "from": "IRUKA", "to": "SHIKAMARU", "width": 1}, {"Occurrences": 6, "from": "MIZUKI", "to": "THE", "width": 1}, {"Occurrences": 3, "from": "MIZUKI", "to": "NINE-TAILED", "width": 1}, {"Occurrences": 23, "from": "KAKASHI", "to": "JONIN", "width": 1}, {"Occurrences": 21, "from": "KAKASHI", "to": "ZABUZA", "width": 1}, {"Occurrences": 16, "from": "KAKASHI", "to": "TAZUNA", "width": 1}, {"Occurrences": 14, "from": "KAKASHI", "to": "SHARINGAN", "width": 1}, {"Occurrences": 8, "from": "KAKASHI", "to": "INARI", "width": 1}, {"Occurrences": 8, "from": "KAKASHI", "to": "DEMON", "width": 1}, {"Occurrences": 7, "from": "KAKASHI", "to": "ROGUE", "width": 1}, {"Occurrences": 5, "from": "KAKASHI", "to": "CHUNIN", "width": 1}, {"Occurrences": 5, "from": "KAKASHI", "to": "NARUTOS", "width": 1}, {"Occurrences": 4, "from": "KAKASHI", "to": "THE", "width": 1}, {"Occurrences": 3, "from": "KAKASHI", "to": "KAGE", "width": 1}, {"Occurrences": 3, "from": "KAKASHI", "to": "K-KAKASHI", "width": 1}, {"Occurrences": 3, "from": "KAKASHI", "to": "NINJA", "width": 1}, {"Occurrences": 3, "from": "KAKASHI", "to": "HAKU", "width": 1}, {"Occurrences": 3, "from": "KAKASHI", "to": "SENSEI", "width": 1}, {"Occurrences": 2, "from": "KAKASHI", "to": "GATO", "width": 1}, {"Occurrences": 2, "from": "KAKASHI", "to": "GENIN", "width": 1}, {"Occurrences": 16, "from": "ZABUZA", "to": "TORI", "width": 1}, {"Occurrences": 6, "from": "ZABUZA", "to": "SHARINGAN", "width": 1}, {"Occurrences": 6, "from": "ZABUZA", "to": "TAZUNA", "width": 1}, {"Occurrences": 5, "from": "ZABUZA", "to": "USHI", "width": 1}, {"Occurrences": 5, "from": "ZABUZA", "to": "ROGUE", "width": 1}, {"Occurrences": 4, "from": "ZABUZA", "to": "GATO", "width": 1}, {"Occurrences": 4, "from": "ZABUZA", "to": "NINJA", "width": 1}, {"Occurrences": 3, "from": "ZABUZA", "to": "JONIN", "width": 1}, {"Occurrences": 3, "from": "ZABUZA", "to": "JIN", "width": 1}, {"Occurrences": 3, "from": "ZABUZA", "to": "INARI", "width": 1}, {"Occurrences": 3, "from": "ZABUZA", "to": "JUTSU", "width": 1}, {"Occurrences": 2, "from": "ZABUZA", "to": "NE", "width": 1}, {"Occurrences": 2, "from": "ZABUZA", "to": "THE", "width": 1}, {"Occurrences": 3, "from": "NINJA", "to": "JONIN", "width": 1}, {"Occurrences": 2, "from": "NINJA", "to": "SENSEI", "width": 1}, {"Occurrences": 6, "from": "THE", "to": "SHARINGAN", "width": 1}, {"Occurrences": 4, "from": "THE", "to": "CHATORA", "width": 1}, {"Occurrences": 4, "from": "THE", "to": "GATO", "width": 1}, {"Occurrences": 3, "from": "THE", "to": "TAZUNA", "width": 1}, {"Occurrences": 2, "from": "THE", "to": "ROGUE", "width": 1}, {"Occurrences": 4, "from": "TAZUNA", "to": "CHUNIN", "width": 1}, {"Occurrences": 4, "from": "TAZUNA", "to": "JONIN", "width": 1}, {"Occurrences": 3, "from": "TAZUNA", "to": "TORA", "width": 1}, {"Occurrences": 3, "from": "TAZUNA", "to": "K-KAKASHI", "width": 1}, {"Occurrences": 3, "from": "TAZUNA", "to": "SHARINGAN", "width": 1}, {"Occurrences": 2, "from": "TAZUNA", "to": "KAGE", "width": 1}, {"Occurrences": 2, "from": "TAZUNA", "to": "ROGUE", "width": 1}, {"Occurrences": 2, "from": "TAZUNA", "to": "GENIN", "width": 1}, {"Occurrences": 2, "from": "TAZUNA", "to": "SHIJIMI", "width": 1}, {"Occurrences": 4, "from": "JONIN", "to": "SHARINGAN", "width": 1}, {"Occurrences": 2, "from": "JONIN", "to": "CHUNIN", "width": 1}, {"Occurrences": 10, "from": "TORI", "to": "USHI", "width": 1}, {"Occurrences": 5, "from": "TORI", "to": "JUTSU", "width": 1}, {"Occurrences": 5, "from": "TORI", "to": "JIN", "width": 1}, {"Occurrences": 5, "from": "TORI", "to": "NE", "width": 1}, {"Occurrences": 4, "from": "TORI", "to": "ROGUE", "width": 1}, {"Occurrences": 3, "from": "TORI", "to": "SHURIKEN", "width": 1}, {"Occurrences": 2, "from": "CHATORA", "to": "GRANDPA", "width": 1}, {"Occurrences": 2, "from": "CHATORA", "to": "KONOHAMARU", "width": 1}, {"Occurrences": 2, "from": "CHATORA", "to": "EBISU", "width": 1}, {"Occurrences": 3, "from": "SHARINGAN", "to": "ROGUE", "width": 1}, {"Occurrences": 2, "from": "INO", "to": "SHIKAMARU", "width": 1}, {"Occurrences": 3, "from": "INARI", "to": "HAKU", "width": 1}, {"Occurrences": 2, "from": "USHI", "to": "SHURIKEN", "width": 1}, {"Occurrences": 2, "from": "USHI", "to": "JUTSU", "width": 1}, {"Occurrences": 2, "from": "USHI", "to": "NE", "width": 1}, {"Occurrences": 2, "from": "USHI", "to": "JIN", "width": 1}, {"Occurrences": 2, "from": "SHIKAMARU", "to": "KIBA", "width": 1}, {"Occurrences": 2, "from": "SHIKAMARU", "to": "HINATA", "width": 1}, {"Occurrences": 2, "from": "SHIKAMARU", "to": "FATTY", "width": 1}, {"Occurrences": 3, "from": "GENIN", "to": "TORA", "width": 1}, {"Occurrences": 2, "from": "GATO", "to": "ROGUE", "width": 1}, {"Occurrences": 3, "from": "CHUNIN", "to": "TORA", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

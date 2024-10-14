@@ -29,7 +29,7 @@ class NameEntityRecognizer:
             output = self.model(token)
             for doc in output.ents:
                 if doc.label_ == 'PERSON':
-                    names.add(doc.text.upper())  # Indentation corrected here
+                    names.add(doc.text.split()[0].upper())  # Indentation corrected here
             list_names.append(names)
         return list_names
 
@@ -40,6 +40,7 @@ class NameEntityRecognizer:
             return df
 
         df = load_substiles_dataset(self.path)
+        df=df.head(10)
         df['ners'] = df['script'].apply(self.name_recognition)
 
         if save_path is not None:
