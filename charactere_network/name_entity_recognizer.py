@@ -38,9 +38,8 @@ class NameEntityRecognizer:
             df = pd.read_csv(save_path)
             df['ners'] = df['ners'].apply(lambda x: literal_eval(x) if isinstance(x, str) else x)
             return df
-
+        
         df = load_substiles_dataset(self.path)
-        df=df.head(10)
         df['ners'] = df['script'].apply(self.name_recognition)
 
         if save_path is not None:
